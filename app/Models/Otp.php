@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Code extends Model
+class Otp extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'total', 'available', 'description'];
+    protected $fillable = ['code', 'phone', 'status', 'verified'];
 }

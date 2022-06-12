@@ -6,8 +6,8 @@
     <form class="mt-3" method="POST" action="{{ route('post.client') }}">
         @csrf
         <div class="mb-2">
-            <input value="{{ old('full_name') }}" id="full_name" name="full_name" class="focus:border-light-blue-500 focus:ring-1 focus:ring-light-blue-500 focus:outline-none w-full text-sm text-black placeholder-gray-500 border border-gray-400 rounded-md py-2 px-10" placeholder="Full Name" />
-            @error('full_name')
+            <input value="{{ old('name') }}" id="name" name="name" class="focus:border-light-blue-500 focus:ring-1 focus:ring-light-blue-500 focus:outline-none w-full text-sm text-black placeholder-gray-500 border border-gray-400 rounded-md py-2 px-10" placeholder="Full Name" />
+            @error('name')
                 <div class="text-red-500">{{ $message }}</div>
             @enderror
         </div>
@@ -23,7 +23,19 @@
                 <div class="text-red-500">{{ $message }}</div>
             @enderror
         </div>
-        <button class="w-1/3 h-9 px-4 rounded-md bg-blue-700 text-sm text-white" type="submit">Save</button>
+        @if(request()->session()->get('spin_error'))
+            <div class="text-red-500 mb-2">{{ request()->session()->get('spin_error') }}</div>
+        @endif
+        @if(request()->session()->get('otp_error'))
+            <div class="text-red-500 mb-2">{{ request()->session()->get('otp_error') }}</div>
+        @endif
+        {{ request()->session()->forget('spin_error') }}
+        {{ request()->session()->forget('otp_error') }}
+        <button class="w-1/3 h-9 px-4 rounded-md bg-blue-700 text-sm text-white" type="submit">Next</button>
     </form>
+    <script>
+        localStorage.setItem('timer', 30);
+        localStorage.setItem('resend', false);
+   </script>
 </div>
 @endsection

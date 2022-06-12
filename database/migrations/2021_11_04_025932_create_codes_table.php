@@ -16,6 +16,8 @@ class CreateCodesTable extends Migration
         Schema::create('codes', function (Blueprint $table) {
             $table->id();
             $table->string('code');
+            $table->integer('total');
+            $table->integer('available');
             $table->text('description')->nullable();
             $table->timestamps();
         });

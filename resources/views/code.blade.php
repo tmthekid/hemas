@@ -9,8 +9,13 @@
                 </span>
             </div>
             <a href="/pdf?code={{ request()->session()->get('code') }}" target="__blank" class="px-4 py-2 mt-8 rounded-md bg-blue-700 text-sm text-white" type="submit">Print</a>
+            <script>
+                localStorage.removeItem('otp_visited');
+            </script>
         @else
-            <script>window.location = "/";</script> 
+            <script>
+                window.location = "/";
+            </script> 
         @endif
     </div>
 </div>

@@ -1,8 +1,9 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Code;
 use Illuminate\Support\Facades\App;
+use App\Models\{Result, Otp, Client, Code};
+use App\Http\Requests\{ClientFormRequest, VerifyOTPFormRequest};
 
 class AppController extends Controller
 {
@@ -10,57 +11,109 @@ class AppController extends Controller
         return view('index');
     }
 
-    public function saveClient(){
-        request()->validate([
-            'full_name' => 'required',
-            'email' => 'required',
-            'phone' => 'required'
-        ]);
-        request()->session()->put('client_name', request()->full_name);
-        request()->session()->put('client_email', request()->email);
-        request()->session()->put('client_phone', request()->phone);
+    public function saveClient(ClientFormRequest $request){
+        $resultEntity = Result::where('phone', $request->phone)->first();
+        if($resultEntity) {
+            $request->session()->put('spin_error', 'You have already spun the wheel');
+            return back()->withInput();
+        }
+        $otpEntity = Otp::where('phone', $request->phone)->first();
+        if($otpEntity && $otpEntity->verified) {
+            $request->session()->put('otp_error', 'Phone number has already been used');
+            return back()->withInput();
+        }
+        if($otpEntity && $otpEntity->status == 2) {
+            $request->session()->put('otp_error', 'Your OTP limit has been exceeded');
+            return back()->withInput();
+        }
+        if($otpEntity && $otpEntity->status == 1) {
+            $otp = rand(100000, 600000);
+            $this->sendOtp($otp, $request->phone);
+            $otpEntity->update(['code' => $otp,'status' => 2]);
+            $request->session()->put('phone', $request->phone);
+            return redirect()->route('get.otp');
+        }
+        $clientEntity = Client::where('phone', $request->phone)->first();
+        if($clientEntity) {
+            $otp = rand(100000, 600000);
+            $this->sendOtp($otp, $request->phone);
+            Otp::create(['code' => $otp, 'phone' => $request->phone, 'status' => 1]);
+            $request->session()->put('phone', $request->phone);
+            return redirect()->route('get.otp');
+        }
+        Client::create($request->only(['name', 'email' , 'phone']));
+        $otp = rand(100000, 600000);
+        $this->sendOtp($otp, $request->phone);
+        Otp::create(['code' => $otp, 'phone' => $request->phone, 'status' => 1]);
+        $request->session()->put('phone', $request->phone);
+        return redirect()->route('get.otp');
+    }
+
+    public function geOTP(){
+        $code = Otp::where('phone', request()->session()->get('phone'))->first();
+        if(!request()->session()->get('phone') || !$code){
+            return redirect()->route('home');
+        }
+        if($code->verified) {
+            return redirect()->route('get.wheel');
+        }
         return view('otp');
     }
 
-    public function verifyOTP(){
-        request()->validate([
-            'otp' => 'required',
-        ]);
+    public function resendOTP(){
+        $otpEntity = Otp::where('phone', request()->session()->get('phone'))->first();
+        if($otpEntity && $otpEntity->status === 1 && !$otpEntity->verified) {
+            $code = rand(100000, 600000);
+            $this->sendOtp($code, $otpEntity->phone);
+            $otpEntity->update(['code' => $code, 'status' => 2]);
+            return response()->json(['data' => true]);
+        }
+        return response()->json(['data' => false]);
+    }
+
+    public function verifyOTP(VerifyOTPFormRequest $request){
+        if(!request()->session()->get('phone')){
+            return redirect()->route('home');
+        }
+        OTP::where('code', $request->otp)->update(['verified' => true]);
         return redirect()->route('get.wheel');
     }
 
+    public function getCoupons(){
+        $coupons = Code::get()->map(function($code){
+            return $code->available > 0 ? [$code->code, ''] : '';
+        });
+        return $coupons->flatten();
+    }
+    
     public function getWheel(){
-        if(!request()->session()->get('client_name')){
-            return redirect()->route('index');
+        $code = Otp::where('phone', request()->session()->get('phone'))->first();
+        if(!$code || !request()->session()->get('phone') || !$code->verified){
+            return redirect()->route('get.otp');
         }
         return view('wheel');
     }
 
     public function saveWheel(){
-        request()->session()->put('code', request()->value);
+        $code = request()->value;
+        if(!$code) {
+            request()->session()->forget('phone');
+            return response()->json(['data' => false]);
+        }
+        request()->session()->put('code', $code);
+        Result::create(['phone' => session()->get('phone'), 'code' => $code]);
+        $codeEntity = Code::where('code', $code)->first();
+        if($codeEntity->available > 0) {
+            $codeEntity->decrement('available');
+        }
         return response()->json(['data' => true]);
-        // $code = $value->codes->where('status', true)->random();
-        // $client_name = request()->session()->get('client_name');
-        // $client_email = request()->session()->get('client_email');
-        // $client_phone = request()->session()->get('client_phone');
-        // request()->session()->forget('client_name');
-        // request()->session()->forget('client_email');
-        // request()->session()->forget('client_phone');
-        // if($serial && $code->id) {
-        //     $serial->update(['status' => false]);
-        //     $serial->client()->create([
-        //         'full_name' => $client_name,
-        //         'email' => $client_email,
-        //         'phone' => $client_phone
-        //     ]);
-        //     request()->session()->put('code', $code->code);
-        //     return response()->json(['data' => true]);
-        // } else {
-        //     return response()->json(['data' => 'Something went wrong, please try again']);
-        // }
     }
 
     public function getCode(){
+        if(!request()->session()->get('phone')){
+            return redirect()->route('home');
+        }
+        request()->session()->forget('phone');
         return view('code');
     }
 
@@ -71,4 +124,6 @@ class AppController extends Controller
         $pdf->loadHTML('<h1>'. request()->code .'</h1>');
         return $pdf->stream();
     }
+
+    protected function sendOtp($otp, $phone){}
 }
