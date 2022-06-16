@@ -10,4 +10,8 @@ class Result extends Model
     use HasFactory;
 
     protected $fillable = ['phone', 'code'];
+
+    public function client(){
+        return $this->belongsTo(Client::class, 'phone', 'phone');
+    }
 }

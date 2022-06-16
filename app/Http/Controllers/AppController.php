@@ -127,6 +127,11 @@ class AppController extends Controller
         return $pdf->stream();
     }
 
+    public function getResults(){
+        $results = Result::with('client')->orderBy('id', 'DESC')->paginate(15);
+        return view('results', compact('results'));
+    }
+
     protected function sendOtp($otp, $phone){
         if(strlen($phone) == 10){
 	     $orderPhoneFormated='94'.substr($phone, -9);

@@ -10,8 +10,8 @@
     <table cellpadding="0" cellspacing="0" border="0">
         <tr>
             <td>
-                <div class="power_controls">
-                    <button id="spin_button" class="px-6 py-2 rounded-md bg-blue-700 text-lg text-white" onClick="startSpin();">Spin</button>
+                <div>
+                    <button id="spin_button" class="button-spin" onClick="startSpin();">Spin</button>
                 </div>
             </td>
             <td width="438" height="582" class="the_wheel" align="center" valign="center">
@@ -38,7 +38,7 @@
             theWheel = new Winwheel({
                 'outerRadius'     : 212,
                 'innerRadius'     : 75,
-                'textFontSize'    : 24,
+                'textFontSize'    : 0,
                 'textOrientation' : 'vertical', 
                 'textAlignment'   : 'outer',
                 'numSegments'     : segments.length,

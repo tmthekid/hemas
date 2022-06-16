@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\AppController;
+use App\Models\Result;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AppController;
 
 Route::get('/', [AppController::class, 'index'])->name('home');
 Route::post('client', [AppController::class, 'saveClient'])->name('post.client');
@@ -13,3 +14,4 @@ Route::post('wheel', [AppController::class, 'saveWheel'])->name('post.wheel');
 Route::get('coupons', [AppController::class, 'getCoupons'])->name('get.coupons');
 Route::get('code', [AppController::class, 'getCode'])->name('get.code');
 Route::get('pdf', [AppController::class, 'downloadPDF'])->name('dowload.pdf');
+Route::get('results', [AppController::class, 'getResults'])->name('get.results');
