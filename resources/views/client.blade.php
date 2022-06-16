@@ -18,7 +18,7 @@
             @enderror
         </div>
         <div class="mb-2">
-            <input value="{{ old('phone') }}" id="phone" name="phone" class="focus:border-light-blue-500 focus:ring-1 focus:ring-light-blue-500 focus:outline-none w-full text-sm text-black placeholder-gray-500 border border-gray-400 rounded-md py-2 px-10" placeholder="Phone Number" />
+            <input type="number" value="{{ old('phone') }}" id="phone" name="phone" class="focus:border-light-blue-500 focus:ring-1 focus:ring-light-blue-500 focus:outline-none w-full text-sm text-black placeholder-gray-500 border border-gray-400 rounded-md py-2 px-10" placeholder="Mobile number" />
             @error('phone')
                 <div class="text-red-500">{{ $message }}</div>
             @enderror

@@ -2,7 +2,7 @@
 
 @section('content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <div style="background: rgba(255, 255, 255, .7); padding: 3rem; border-radius: 1rem;">
+    <div style="background: rgba(255, 255, 255); padding: 3rem; border-radius: 1rem;">
         <h1 class="text-3xl font-semibold">OTP Details</h1>
         <form class="mt-3" method="POST" action="{{ route('post.otp') }}">
             @csrf

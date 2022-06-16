@@ -49,7 +49,7 @@ class AppController extends Controller
         return redirect()->route('get.otp');
     }
 
-    public function geOTP(){
+    public function getOTP(){
         $code = Otp::where('phone', request()->session()->get('phone'))->first();
         if(!request()->session()->get('phone') || !$code){
             return redirect()->route('home');
@@ -96,13 +96,14 @@ class AppController extends Controller
 
     public function saveWheel(){
         $code = request()->value;
-        if(!$code) {
-            request()->session()->forget('phone');
-            return response()->json(['data' => false]);
+        if($code == '') {
+            request()->session()->put('code', '');
+            return response()->json(['data' => true]);
         }
-        request()->session()->put('code', $code);
         Result::create(['phone' => session()->get('phone'), 'code' => $code]);
         $codeEntity = Code::where('code', $code)->first();
+        request()->session()->put('code', $code);
+        request()->session()->put('description', $codeEntity->description);
         if($codeEntity->available > 0) {
             $codeEntity->decrement('available');
         }
@@ -120,10 +121,55 @@ class AppController extends Controller
     public function downloadPDF(){
         $code = request()->session()->get('code');
         request()->session()->forget('code');
+        request()->session()->forget('phone');
         $pdf = App::make('dompdf.wrapper');
-        $pdf->loadHTML('<h1>'. request()->code .'</h1>');
+        $pdf->loadHTML('<h1>'.request()->code.'</h1><br /><h3>'.request()->description.'</h3>');
         return $pdf->stream();
     }
 
-    protected function sendOtp($otp, $phone){}
+    protected function sendOtp($otp, $phone){
+        if(strlen($phone) == 10){
+	     $orderPhoneFormated='94'.substr($phone, -9);
+    	}else if(strlen($phone) == 9){
+    	    $orderPhoneFormated='94'.$phone;
+    	}else{
+    	    $orderPhoneFormated= preg_replace("/[^\d]/","",$phone);
+    	}
+       
+       date_default_timezone_set('Asia/Colombo');
+      
+        $now = date("Y-m-d\TH:i:s");
+        $username = "hemas_user";
+        $password = "@q123456";
+        $digest=md5($password);
+        $body = '{
+        "messages": [
+        		{
+        		"clientRef": "'.$otp.'",
+        		"number": "'.$orderPhoneFormated.'",
+        		"mask": "HEMASESTORE",
+        		"text": "Spin the wheel otp is '.$otp.' ",
+        		"campaignName":"HemasOrder"
+        		}
+        	]
+        }';
+        	$ch = curl_init();
+        	curl_setopt($ch, CURLOPT_URL,"https://richcommunication.dialog.lk/api/sms/send");
+        	curl_setopt($ch, CURLOPT_POST, 1);
+        	curl_setopt($ch, CURLOPT_POSTFIELDS,$body);
+        	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        	$headers = [
+        	 	'Content-Type: application/json',
+        	 	'USER: '.$username,
+        		'DIGEST: '.$digest,
+        	 	'CREATED: '.$now
+        	];
+        	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        	$server_output = curl_exec ($ch);
+        	curl_close ($ch);
+        
+        	if(!empty($server_output)){		
+        	}else{
+        	}
+    }
 }

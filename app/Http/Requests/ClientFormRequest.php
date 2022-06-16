@@ -26,7 +26,7 @@ class ClientFormRequest extends FormRequest
         return [
             'name' => 'required',
             'email' => 'required',
-            'phone' => 'required'
+            'phone' => 'required|max:10|min:10'
         ];
     }
 

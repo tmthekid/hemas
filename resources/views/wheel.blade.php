@@ -25,11 +25,16 @@
 @endsection
 @section('scripts')
     <script src="{{ asset('js/wheel.js') }}"></script>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
     <script>
         let theWheel; 
         fetch('coupons').then(res => res.json()).then(results => {
-            const segments = results.map(code => ({ 'fillStyle' : '#ee1c24', 'text' : code }));
+            const segments = results.map(code => {
+                if(code == '') {
+                    return ({ 'fillStyle' : '#5998ab', 'text' : '' });
+                }
+                return ({ 'fillStyle' : '#f57b20', 'text' : code });
+            });
             theWheel = new Winwheel({
                 'outerRadius'     : 212,
                 'innerRadius'     : 75,
@@ -49,7 +54,7 @@
                 },
                 'pins' :
                 {
-                    'number'     : 24,
+                    'number'     : 16,
                     'fillStyle'  : 'silver',
                     'outerRadius': 4,
                 }
@@ -107,12 +112,6 @@
             wheelSpinning = false;
         }
         function alertPrize(indicatedSegment){
-            if(indicatedSegment.text === '') {
-                alert('No price');
-                localStorage.removeItem('otp_visited');
-                localStorage.setItem('timer', 30);
-                 localStorage.setItem('resend', false);
-            }
             fetch('/wheel', { method: 'POST', headers: { 
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -122,9 +121,6 @@
                 const data = await res.json();
                 if(data.data) {
                     window.location = '/code'
-                } else {
-                    localStorage.removeItem('otp_visited');
-                    window.location = '/'
                 }
             });
         }
